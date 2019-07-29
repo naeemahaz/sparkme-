@@ -241,6 +241,54 @@ Instructions
 Randomly split the flights data into two sets with 80:20 proportions. For repeatability set a random number seed of 17 for the split.
 Check that the testing data has roughly 80% of the records from the original data.
 
+# Split into training and testing sets in a 80:20 ratio
+flights_train, flights_test = flights.randomSplit([0.8, 0.2],seed = 17)
+
+# Check that training set has around 80% of records
+training_ratio = flights_train.count() / flights_test.count()
+print(training_ratio)
+
+
+Build a Decision Tree
+Now that you've split the flights data into training and testing sets, you can use the training set to fit a Decision Tree model.
+
+The data are available as flights_train and flights_test.
+
+NOTE: It will take a few seconds for the model to train... please be patient!
+Import the class for creating a Decision Tree classifier.
+Create a classifier object and fit it to the training data.
+Make predictions for the testing data and take a look at the predictions.
+
+# Import the Decision Tree Classifier class
+from pyspark.ml.classification import DecisionTreeClassifier 
+
+# Create a classifier object and fit to the training data
+tree = DecisionTreeClassifier()
+tree_model = tree.fit(flights_train)
+
+# Create predictions for the testing data and take a look at the predictions
+prediction = tree_model.transform(flights_test)
+prediction.select('label', 'prediction', 'probability').show(5, False)
+
+
+---------------------------------------------------------------------------------------
+
+Evaluate the Decision Tree
+You can assess the quality of your model by evaluating how well it performs on the testing data. Because the model was not trained on these data, this represents an objective assessment of the model.
+
+A confusion matrix gives a useful breakdown of predictions versus known values. It has four cells which represent the counts of:
+
+True Negatives (TN) — model predicts negative outcome & known outcome is negative
+True Positives (TP) — model predicts positive outcome & known outcome is positive
+False Negatives (FN) — model predicts negative outcome but known outcome is positive
+False Positives (FP) — model predicts positive outcome but known outcome is negative.
+
+Instructions
+
+Create a confusion matrix by counting the combinations of label and prediction. Display the result.
+Count the number of True Negatives, True Positives, False Negatives and False Positives.
+Calculate the accuracy.
+
 
 
 
