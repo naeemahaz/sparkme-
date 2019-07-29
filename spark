@@ -168,6 +168,68 @@ flights_km = flights_km.withColumn('label', (flights_km.delay >= 15).cast('integ
 flights_km.show(5)
 
 -----------------------------------------------------------------------------------------
+Categorical columns
+
+In the flights data there are two columns, carrier and org, which hold categorical data. You need to transform those columns into indexed numerical values.
+
+Instructions
+
+Import the appropriate class and create an indexer object to transform the carrier column from a string to an numeric index.
+Prepare the indexer object on the flight data.
+Use the prepared indexer to create the numeric index column.
+Repeat the process for the org column.
+
+
+from pyspark.ml.feature import StringIndexer
+
+# Create an indexer
+indexer = StringIndexer(inputCol='carrier', outputCol='carrier_idx')
+
+# Indexer identifies categories in the data
+indexer_model = indexer.fit(flights)
+
+# Indexer creates a new column with numeric index values
+flights_indexed = indexer_model.transform(flights)
+
+# Repeat the process for the other categorical feature
+flights_indexed = StringIndexer(inputCol='org', outputCol='org_idx').fit(flights_indexed).transform(flights_indexed)
+
+----------------------------------------------------------------------------------------------
+Assembling columns
+The final stage of data preparation is to consolidate all of the predictor columns into a single column.
+
+At present our data has the following predictor columns:
+
+mon, dom and dow
+carrier_idx (derived from carrier)
+org_idx (derived from org)
+km
+depart
+duration
+
+Import the class which will assemble the predictors.
+Create an assembler object that will allow you to merge the predictors columns into a single column.
+Use the assembler to generate a new consolidated column.
+
+# Import the necessary class
+from pyspark.ml.feature import VectorAssembler
+
+# Create an assembler object
+assembler = VectorAssembler(inputCols=[
+    'mon', 'dom', 'dow', 'carrier_idx', 'org_idx', 'km', 'depart', 'duration'
+], outputCol='features')
+
+# Consolidate predictor columns
+flights_assembled = assembler.transform(flights)
+
+# Check the resulting column
+flights_assembled.select('features', 'delay').show(5, truncate=False)
+
+------------------------------------------------------------------------------------------------------------
+Decision Tree
+
+
+
 
 
 
