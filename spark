@@ -289,7 +289,20 @@ Create a confusion matrix by counting the combinations of label and prediction. 
 Count the number of True Negatives, True Positives, False Negatives and False Positives.
 Calculate the accuracy.
 
+# Create a confusion matrix
+prediction.groupBy("label", 'prediction').count().show()
 
+# Calculate the elements of the confusion matrix
+TN = prediction.filter('prediction = 0 AND label = prediction').count()
+TP = prediction.filter('prediction = 1 AND label = prediction').count()
+FN = prediction.filter('prediction = 0 AND label != prediction').count()
+FP = prediction.filter('prediction = 1 AND label != prediction').count()
+
+# Accuracy measures the proportion of correct predictions
+accuracy = (TP/TN)
+print(accuracy)
+
+-----------------------------------------------------------------------------------------------
 
 
 
