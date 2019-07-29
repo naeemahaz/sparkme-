@@ -117,6 +117,15 @@ sms.printSchema()
 ---------------------------------------------------------------------------
 Data Preparation
 
+Removing columns and rows
+You previously loaded airline flight data from a CSV file. You're going to develop a model which will predict whether or not a given flight will be delayed.
+
+In this exercise you need to trim those data down by:
+
+removing an uninformative column and
+removing rows which do not have information about whether or not a flight was delayed.
+Note:: You might find it useful to revise the slides from the lessons in the Slides panel next to the IPython Shell.
+
 # Remove the 'flight' column
 flights = flights.drop('flight')
 
@@ -130,6 +139,20 @@ flights = flights.filter('delay IS NOT NULL')
 flights = flights.dropna()
 print(flights.count())
 ------------------------------------------------------------------------------------
+Column manipulation
+The Federal Aviation Administration (FAA) considers a flight to be "delayed" when it arrives 15 minutes or more after its scheduled time.
+
+The next step of preparing the flight data has two parts:
+
+convert the units of distance, replacing the mile column with a kmcolumn; and
+create a Boolean column indicating whether or not a flight was delayed.
+Instructions
+0 XP
+Import a function which will allow you to round a number to a specific number of decimal places.
+Derive a new km column from the mile column, rounding to zero decimal places. One mile is 1,60934 km.
+Remove the mile column.
+Create a label column with a value of 1 indicating the delay was 15 minutes or more and 0 otherwise.
+
 
 # Import the required function
 from pyspark.sql.functions import round
