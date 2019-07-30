@@ -733,9 +733,144 @@ encoded to (3,[],[]) because it does not get it's own dummy variable. If none of
 then this one must be true. So to make a separate dummy variable would be redundant!
 --------------------------------------------------------------------------------------------------------------------
 
+Regression 
+
+Categorical features is essential for building regression models. 
+
+Want to predict fuel consumption using vehicle mass. A scatter plot is a good way to visualize the 
+relationship between those two variables. Only a subset of the data are included in this plot, but 
+it's clear that consumption increases with mass. 
+
+A model should describe the average relationship of consumption to mass, without necessarily passing through individual points. 
+
+First we need to define the concept of residuals. The residual is the difference between the observed value and the corresponding
+modeled value. 
+
+The best model would somehow make these residuals as small as possible. 
+
+Loss Function: 
+
+MSE = "Mean Squared Error" 
+
+Regression loss
+1. Mean Square Error, Quadratic loss, L2 Loss
+Mean Square Error (MSE) is the most commonly used regression loss function. 
+MSE is the sum of squared distances between our target variable and predicted values.
+
+Below is a plot of an MSE function where the true target value is 100, and the predicted values 
+range between -10,000 to 10,000. The MSE loss (Y-axis) reaches its minimum value at prediction (X-axis) = 100. 
+The range is 0 to ∞.
 
 
+2. Mean Absolute Error, L1 Loss
+Mean Absolute Error (MAE) is another loss function used for regression models. MAE is the sum of absolute 
+differences between our target and predicted variables. So it measures the average magnitude of errors in a 
+set of predictions, without considering their directions. (If we consider directions also, that would be called 
+Mean Bias Error (MBE), which is a sum of residuals/errors). The range is also 0 to ∞.
 
+MSE vs. MAE (L2 loss vs L1 loss)
+In short, using the squared error is easier to solve, but using the absolute error is more robust to outliers. 
+But let’s understand why!
+Whenever we train a machine learning model, our goal is to find the point that minimizes loss function. 
+Of course, both functions reach the minimum when the prediction is exactly equal to the true value.
+
+
+MAE loss is useful if the training data is corrupted with outliers (i.e. we erroneously receive unrealistically 
+huge negative/positive values in our training environment, but not our testing environment).
+Intuitively, we can think about it like this: If we only had to give one prediction for all the observations 
+that try to minimize MSE, then that prediction should be the mean of all target values. But if we try to minimize MAE, 
+that prediction would be the median of all observations. We know that median is more robust to outliers than mean, which 
+consequently makes MAE more robust to outliers than MSE.
+
+3. Huber Loss, Smooth Mean Absolute Error
+Huber loss is less sensitive to outliers in data than the squared error loss. It’s also differentiable at 0. 
+It’s basically absolute error, which becomes quadratic when error is small. How small that error has to be to make it 
+quadratic depends on a hyperparameter, 𝛿 (delta), which can be tuned. Huber loss approaches MAE when 𝛿 ~ 0 and MSE when 
+𝛿 ~ ∞ (large numbers.)
+
+
+4. Log-Cosh Loss
+Log-cosh is another function used in regression tasks that’s smoother than L2. Log-cosh is 
+the logarithm of the hyperbolic cosine of the prediction error.
+Advantage: log(cosh(x)) is approximately equal to (x ** 2) / 2 for small x and to abs(x) - log(2) for large x. 
+This means that 'logcosh' works mostly like the mean squared error, but will not be so strongly affected by the 
+occasional wildly incorrect prediction. It has all the advantages of Huber loss, and it’s twice differentiable 
+everywhere, unlike Huber loss.
+Why do we need a 2nd derivative? Many ML model implementations like XGBoost use Newton’s method to find the 
+optimum, which is why the second derivative (Hessian) is needed. For ML frameworks like XGBoost, twice differentiable 
+functions are more favorable.
+
+
+5. Quantile Loss
+In most of the real world prediction problems, we are often interested to know about the uncertainty in our 
+predictions. Knowing about the range of predictions as opposed to only point estimates can significantly improve 
+decision making processes for many business problems.
+Quantile loss functions turn out to be useful when we are interested in predicting an interval instead of only 
+point predictions. Prediction interval from least square regression is based on an assumption that residuals (y — y_hat) 
+have constant variance across values of independent variables. We can not trust linear regression models which violate this 
+assumption. We can not also just throw away the idea of fitting linear regression model as baseline by saying that such 
+situations would always be better modeled using non-linear functions or tree based models. This is where quantile loss and 
+quantile regression come to rescue as regression based on quantile loss provides sensible prediction intervals even for 
+residuals with non-constant variance or non-normal distribution.
+
+
+Out of all possible models, the best model is found by minimizing a loss function, which is an equation that describes how 
+well the model fits the data. This is the equation for the mean squared error loss function. 
+
+You've got the observed values, y_i - observed values 
+y hat _i - model values 
+
+The difference between these is the residual. 
+
+The residuals are squared and then summed together. Dividing through by the number of data points to give the mean or average. 
+
+By minimizing the loss function you are effectively minimizing the average residual or the average distance 
+between the observed and modeled values. 
+
+Spark will do the math for you.  
+
+
+Let's build a regression model to predict fuel consumption using three predictors:
+Predit consumption using: mass, cyl and type_dummy. 
+Consolidate predictors into a single column.  
+Predictors and assemble them into a single column called 'features'.
+
+The data are then randomly split into training and testing sets.  
+
+
+Build regression model 
+--------------------------------------
+from pyspark.ml.regression import LinearRegression 
+regression = LinearRegression(labelCol='consumption') 
+
+#By default this class expects to find the target data in a column called "label". Since you are aiming to predict the 
+#"consumption" column you need to explicitly specify the name of the label column when creating a regression object. 
+
+Fit to cars_train (training data)
+
+#Next train the model on the training data using the fit() method. 
+
+regression = regression.fit(cars_train) 
+
+#Predict on cars_test (testing data) 
+predictions = regression.transform(cars_test)
+
+#The trained model can then be used to making predictions on the tesing data using the 
+#transform() method. 
+
+#Examine predictions 
+#Comparing the predicted values to the known values from the testing data you'll see that there is resonable agreement. 
+#A plot gives a clearer picture. 
+#The dashed diagonal lie represents perfect prediction. 
+#Most of the points lie close to this line, which is good. 
+#Useful to have a single number which summarizes the performance of a model. 
+
+#Calculate RMSE 
+
+from pyspark.ml.evaluation import RegressionEvaluator 
+#Find RMSE (ROOT MEAN SQUARED ERROR)
+
+RegressionEvalutor(labelCol='consumption').evaluate(predictions) 
 
 
 
