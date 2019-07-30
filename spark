@@ -319,6 +319,56 @@ Create a classifier object and train it on the training data.
 Make predictions for the testing data and create a confusion matrix.
 
 
+# Import the logistic regression class
+from pyspark.ml.classification import LogisticRegression
+
+# Create a classifier object and train on training data
+logistic = LogisticRegression().fit(flights_train)
+
+# Create predictions for the testing data and show confusion matrix
+prediction = logistic.transform(flights_test)
+prediction.groupBy('label','prediction').count().show()
+
+------------------------------------------------------------------------------------------------------------
+Evaluate the Logistic Regression model
+Accuracy is generally not a very reliable metric because it can be biased by the most common target class.
+
+There are two other useful metrics:
+
+precision and
+recall.
+Check the slides for this lesson to get the relevant expressions.
+
+Precision is the proportion of positive predictions which are correct. For all flights which are predicted to be delayed, what proportion is actually delayed?
+
+Recall is the proportion of positives outcomes which are correctly predicted. For all delayed flights, what proportion is correctly predicted by the model?
+
+The precision and recall are generally formulated in terms of the positive target class. But it's also possible to calculate weighted versions of these metrics which look at both target classes.
+
+The components of the confusion matrix are available as TN, TP, FN and FP, as well as the object prediction.
+
+
+Find the precision and recall.
+Create a multi-class evaluator and evaluate weighted precision.
+Create a binary evaluator and evaluate AUC.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
