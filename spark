@@ -1,7 +1,9 @@
 Creating a SparkSession
-In this exercise, you'll spin up a local Spark cluster using all available cores. The cluster will be accessible via a SparkSession object.
+In this exercise, you'll spin up a local Spark cluster using all available cores. The cluster will be accessible via a 
+SparkSession object.
 
-The SparkSession class has a builder attribute, which is an instance of the Builder class. The Builder class exposes three important methods that let you:
+The SparkSession class has a builder attribute, which is an instance of the Builder class. The Builder class 
+exposes three important methods that let you:
 
 specify the location of the master node;
 name the application (optional); and
@@ -10,7 +12,8 @@ The SparkSession class has a version attribute which gives the version of Spark.
 
 Find out more about SparkSession here.
 
-Once you are finished with the cluster, it's a good idea to shut it down, which will free up its resources, making them available for other processes.
+Once you are finished with the cluster, it's a good idea to shut it down, which will free up its resources, 
+making them available for other processes.
 
 Note:: You might find it useful to revise the slides from the lessons in the Slides panel next to the IPython Shell.
 
@@ -38,7 +41,8 @@ spark.stop()
 ----------------------------------------------------------------------------
 
 Loading flights data
-In this exercise you're going to load some airline flight data from a CSV file. To ensure that the exercise runs quickly these data have been trimmed down to only 50 000 records. You can get a larger dataset in the same format here.
+In this exercise you're going to load some airline flight data from a CSV file. To ensure that the exercise 
+runs quickly these data have been trimmed down to only 50 000 records. You can get a larger dataset in the same format here.
 
 Notes on CSV format:
 
@@ -81,9 +85,12 @@ flights.show(5)
 flights.dtypes
 -----------------------------------------------------------------------------------------------------------
 Loading SMS spam data
-You've seen that it's possible to infer data types directly from the data. Sometimes it's convenient to have direct control over the column types. You do this by defining an explicit schema.
+You've seen that it's possible to infer data types directly from the data. Sometimes it's convenient to have 
+direct control over the column types. You do this by defining an explicit schema.
 
-The file sms.csv contains a selection of SMS messages which have been classified as either 'spam' or 'ham'. These data have been adapted from the UCI Machine Learning Repository. There are a total of 5574 SMS, of which 747 have been labelled as spam.
+The file sms.csv contains a selection of SMS messages which have been classified as either 'spam' or 'ham'. 
+These data have been adapted from the UCI Machine Learning Repository. There are a total of 5574 SMS, of which 
+747 have been labelled as spam.
 
 Notes on CSV format:
 
@@ -118,7 +125,8 @@ sms.printSchema()
 Data Preparation
 
 Removing columns and rows
-You previously loaded airline flight data from a CSV file. You're going to develop a model which will predict whether or not a given flight will be delayed.
+You previously loaded airline flight data from a CSV file. You're going to develop a model which will 
+predict whether or not a given flight will be delayed.
 
 In this exercise you need to trim those data down by:
 
@@ -140,7 +148,8 @@ flights = flights.dropna()
 print(flights.count())
 ------------------------------------------------------------------------------------
 Column manipulation
-The Federal Aviation Administration (FAA) considers a flight to be "delayed" when it arrives 15 minutes or more after its scheduled time.
+The Federal Aviation Administration (FAA) considers a flight to be "delayed" when it arrives 15 minutes or 
+more after its scheduled time.
 
 The next step of preparing the flight data has two parts:
 
@@ -170,7 +179,8 @@ flights_km.show(5)
 -----------------------------------------------------------------------------------------
 Categorical columns
 
-In the flights data there are two columns, carrier and org, which hold categorical data. You need to transform those columns into indexed numerical values.
+In the flights data there are two columns, carrier and org, which hold categorical data. You need to 
+transform those columns into indexed numerical values.
 
 Instructions
 
@@ -229,7 +239,8 @@ flights_assembled.select('features', 'delay').show(5, truncate=False)
 Decision Tree
 
 Train/test split
-To objectively assess a Machine Learning model you need to be able to test it on an independent set of data. You can't use the same data that you used to train the model: of course the model will perform (relatively) well on those data!
+To objectively assess a Machine Learning model you need to be able to test it on an independent set of data. 
+You can't use the same data that you used to train the model: of course the model will perform (relatively) well on those data!
 
 You will split the data into two components:
 
@@ -238,7 +249,9 @@ testing data (used to test the model).
 
 Instructions
 
-Randomly split the flights data into two sets with 80:20 proportions. For repeatability set a random number seed of 17 for the split.
+Randomly split the flights data into two sets with 80:20 proportions. For repeatability set a random 
+number seed of 17 for the split.
+
 Check that the testing data has roughly 80% of the records from the original data.
 
 # Split into training and testing sets in a 80:20 ratio
@@ -274,7 +287,8 @@ prediction.select('label', 'prediction', 'probability').show(5, False)
 ---------------------------------------------------------------------------------------
 
 Evaluate the Decision Tree
-You can assess the quality of your model by evaluating how well it performs on the testing data. Because the model was not trained on these data, this represents an objective assessment of the model.
+You can assess the quality of your model by evaluating how well it performs on the testing data. 
+Because the model was not trained on these data, this represents an objective assessment of the model.
 
 A confusion matrix gives a useful breakdown of predictions versus known values. It has four cells which represent the counts of:
 
@@ -305,12 +319,15 @@ print(accuracy)
 -----------------------------------------------------------------------------------------------
 Build a Logistic Regression model
 
-You've already built a Decision Tree model using the flights data. Now you're going to create a Logistic Regression model on the same data.
+You've already built a Decision Tree model using the flights data. Now you're going to create a 
+Logistic Regression model on the same data.
 
 
 The objective is to predict whether a flight is likely to be delayed by at least 15 minutes (label 1) or not (label 0).
 
-Although you have a variety of predictors at your disposal, you'll only use the mon, depart and duration columns for the moment. These are numerical features which can immediately be used for a Logistic Regression model. You'll need to do a little more work before you can include categorical features. Stay tuned!
+Although you have a variety of predictors at your disposal, you'll only use the mon, depart and 
+duration columns for the moment. These are numerical features which can immediately be used for a Logistic Regression model. 
+You'll need to do a little more work before you can include categorical features. Stay tuned!
 
 The data have been split into training and testing sets and are available as flights_train and flights_test.
 
@@ -339,11 +356,14 @@ precision and
 recall.
 Check the slides for this lesson to get the relevant expressions.
 
-Precision is the proportion of positive predictions which are correct. For all flights which are predicted to be delayed, what proportion is actually delayed?
+Precision is the proportion of positive predictions which are correct. For all flights which are predicted to 
+be delayed, what proportion is actually delayed?
 
-Recall is the proportion of positives outcomes which are correctly predicted. For all delayed flights, what proportion is correctly predicted by the model?
+Recall is the proportion of positives outcomes which are correctly predicted. For all delayed flights, what 
+proportion is correctly predicted by the model?
 
-The precision and recall are generally formulated in terms of the positive target class. But it's also possible to calculate weighted versions of these metrics which look at both target classes.
+The precision and recall are generally formulated in terms of the positive target class. But it's also 
+possible to calculate weighted versions of these metrics which look at both target classes.
 
 The components of the confusion matrix are available as TN, TP, FN and FP, as well as the object prediction.
 
@@ -411,8 +431,10 @@ from pyspark.ml.feature import HashingTF
 hasher = HashingTF(inputCol="words", outputCol="hash', numFeatures=32)
 books = hasher.transform(books)
 
-The first list contains the hashed values and the second list indicates how many times each of those values occurs.  For example, in the first 
-document the word "long" has a hash of 8 and occurs twice. Similarly, the word "five" has a hash of 6 and occurs once in each of the last two
+The first list contains the hashed values and the second list indicates how many times each of those values occurs.  
+For example, in the first 
+document the word "long" has a hash of 8 and occurs twice. Similarly, the word "five" has a hash of 6 and occurs once 
+in each of the last two
 documents. 
 
 
@@ -424,11 +446,35 @@ it's probably going to be less useful for building a classifier. We want to weig
 document against how frequently that word occurs across all documents. To do this you reduce the effective count for more common 
 words, giving what is known as the "inverse document frequency". 
 
-Inverse document frequency is generated by the IDF class, which is first fit to the hashed data and then used to generate weighted counts. 
+Inverse document frequency is generated by the IDF class, which is first fit to the hashed data and then used to 
+generate weighted counts. 
+
 The word "five", for example, occurs in multiple documents, so its effective frequency is reduced. 
 
 The inverse document frequencies are precisely what we need for building a Machine Learning model. 
 
+
+
+
+Punctuation, numbers and tokens
+At the end of the previous chapter you loaded a dataset of SMS messages which had been 
+labeled as either "spam" (label 1) or "ham" (label 0). You're now going to use those data to build a classifier model.
+
+But first you'll need to prepare the SMS messages as follows:
+
+remove punctuation and numbers
+tokenize (split into individual words)
+remove stop words
+apply the hashing trick
+convert to TF-IDF representation.
+In this exercise you'll remove punctuation and numbers, then tokenize the messages.
+
+The SMS data are available as sms.
+
+
+Import the function to replace regular expressions and the feature to tokenize.
+Replace all punctuation characters from the text column with a space. Do the same for all numbers in the text column.
+Split the text column into tokens. Name the output column words.
 
 
 
