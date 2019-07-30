@@ -574,6 +574,176 @@ Group the data by label and prediction then count() and show() the results.
 
 --------------------------------------------------------------------------------------
 
+One-Hot Encoding
+
+The first step is to create a column for each of the levels. Effectively you then place a check in the column corresponding 
+to the value in each row. Each categorical level becomes a column. Binary values indicate the presence (1) or absence (0) 
+of the corresponding level. Sparse representation: store column index and value. The process of creating dummy 
+variables is called 'One-Hot'.
+
+from pyspark.ml.feature import OneHotEncoderEstimator 
+onehot = OneHotEncoderEstimator(inputCols=['type_idx'], outputCols=['type_dummy']
+
+#When instantiating the class you need to specify the names of the input and output columns.  
+
+#Fit the encoder to the data
+
+Onehot = onehot.fit(cars)
+
+#How many category levels? 
+onehot.categorySizes 
+
+cars = onehot.transform(cars)
+cars.select('type','type_idx', 'type_dummy').distinct().sort('type_idx').show()
+
+#Now that the encoder is setup it can be applied to the data by calling the transform() method. 
+
+#Dense versus sparse 
+
+from pyspark.mllib.linalg import DenseVector, SparseVector 
+
+#Suppose that you want to stor a vector which consists mostly of zeros.  
+#You could store it as a dense vector, in which each of the elements of the vector is stored explicitly. 
+
+#A sparse representation is a much better alternative. 
+
+One hot encoding is a common technique used to work with categorical features. There are multiple tools available 
+to facilitate this pre-processing step in Python, but it usually becomes much harder when you need your code to work 
+on new data that might have missing or additional values.
+
+That's the case if you want to deploy a model to production for instance, sometimes you don't know what new values 
+will appear in the data you receive.
+
+In this tutorial we will present two ways of dealing with this problem. Everytime, we will first run one hot encoding on 
+our training set and save a few attributes that we can reuse later on, when we need to process new data.
+
+If you deploy a model to production, the best way of saving those values is writing your own class and define them 
+as attributes that will be set at training, as an internal state.
+
+What is Categorical Data?
+Categorical data are variables that contain label values rather than numeric values.
+
+The number of possible values is often limited to a fixed set.
+
+Categorical variables are often called nominal.
+
+Some examples include:
+
+A “pet” variable with the values: “dog” and “cat“.
+A “color” variable with the values: “red“, “green” and “blue“.
+A “place” variable with the values: “first”, “second” and “third“.
+Each value represents a different category.
+
+Some categories may have a natural relationship to each other, such as a natural ordering.
+
+The “place” variable above does have a natural ordering of values. This type of categorical variable is called an ordinal variable.
+
+What is the Problem with Categorical Data?
+Some algorithms can work with categorical data directly.
+
+For example, a decision tree can be learned directly from categorical data with no data transform 
+required (this depends on the specific implementation).
+
+Many machine learning algorithms cannot operate on label data directly. They require all input variables 
+and output variables to be numeric.
+
+In general, this is mostly a constraint of the efficient implementation of machine learning algorithms 
+rather than hard limitations on the algorithms themselves.
+
+This means that categorical data must be converted to a numerical form. If the categorical variable is an 
+output variable, you may also want to convert predictions by the model back into a categorical form in order 
+to present them or use them in some application.
+----------------------------------------------------------------------------------------
+
+Encoding flight origin
+The org column in the flights data is a categorical variable giving the airport from which a flight departs.
+
+ORD — O'Hare International Airport (Chicago)
+SFO — San Francisco International Airport
+JFK — John F Kennedy International Airport (New York)
+LGA — La Guardia Airport (New York)
+SMF — Sacramento
+SJC — San Jose
+TUS — Tucson International Airport
+OGG — Kahului (Hawaii)
+Obviously this is only a small subset of airports. Nevertheless, since this is a categorical variable, it needs to be 
+one-hot encoded before it can be used in a regression model.
+
+The data are in a variable called flights. You have already used a string indexer to create a column of indexed 
+values corresponding to the strings in org.
+
+Note:: You might find it useful to revise the slides from the lessons in the Slides panel next to the IPython Shell.
+Import the one-hot encoder class.
+Create an one-hot encoder instance, naming the output column 'org_dummy'.
+Apply the one-hot encoder to the flights data.
+Generate a summary of the mapping from categorical values to binary encoded dummy variables. 
+Include only unique values and order by org_idx.
+
+# Import the one hot encoder class
+from pyspark.ml.feature import OneHotEncoderEstimator
+
+# Create an instance of the one hot encoder
+onehot = OneHotEncoderEstimator(inputCols=['org_idx'], outputCols=['org_dummy'])
+
+# Apply the one hot encoder to the flights data
+onehot = onehot.fit(flights)
+flights_onehot = onehot.transform(flights)
+
+# Check the results
+flights_onehot.select('org', 'org_idx', 'org_dummy').distinct().sort('org_idx').show()
+
+
+Encoding shirt sizes
+You have data for a consignment of t-shirts. The data includes the size of the shirt, which is given as either S, M, L or XL.
+
+Here are the counts for the different sizes:
+
++----+-----+
+|size|count|
++----+-----+
+|   S|    8|
+|   M|   15|
+|   L|   20|
+|  XL|    7|
++----+-----+
+The sizes are first converted to an index using StringIndexer and then one-hot encoded using OneHotEncoderEstimator.
+
+Which of the following is not true:
+
+Answer the question
+50 XP
+Possible Answers
+S shirts get index 2.0 and are one-hot encoded as (3,[2],[1.0])
+press
+1
+M shirts get index 1.0 and are one-hot encoded as (3,[1],[1.0])
+press
+2
+L shirts get index 0.0 and are one-hot encoded as (3,[0],[1.0])
+press
+3
+XL shirts get index 3.0 and are one-hot encoded as (3,[3],[1.0])
+press
+
+This statement is true: M is the second most frequent size. It receives and index of 1 and is one-hot encoded to column 1.
+This statement is true: L is the most frequent size. It receives and index of 0 and is one-hot encoded to column 0.
+
+Correct! This statement is false: XL is the least frequent size, so it receives an index of 3. However, it is one-hot 
+encoded to (3,[],[]) because it does not get it's own dummy variable. If none of the other dummy variables are true, 
+then this one must be true. So to make a separate dummy variable would be redundant!
+--------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
