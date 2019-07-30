@@ -24,7 +24,7 @@ Retrieve the version of Spark running on the cluster.
 Shut down the cluster.
 
 # Import the PySpark module
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession 
 
 # Create SparkSession object
 spark = SparkSession.builder \
