@@ -1051,13 +1051,33 @@ print(avg_ground_lga)
 You're going to spend over an hour on the ground at JFK or LGA but only around 15 minutes at OGG.
 ------------------------------------------------------------------------------------------------------------
 
+Bucketing & Engineering
+
+#RPM buckets 
+
+from pyspark.ml.feature import Bucketizer
+bucketizer = Bucketizer (splits=[3500,4500,600,6500], 
+                          inputCol="rpm",
+                          outputCol="rpm_bin")
 
 
+#"splits" argument and also providing the names of the input and output columns. 
 
+#Apply buckets to rpm column.  
 
+cars = bucketizer.transform(cars)
 
+#RPM buckets 
+buckedted.select('rpm','rpm_bin').show(5)
 
+#The result has a new column with the discrete bucket values. 
 
+cars.groupBy('rpm_bin').count().show()
+
+#One-hot encoded RPM buckets 
+#The RPM buckets are one-hot encoded to dummy variables.  
+
+#The 'high' RPM bucket is the reference level and doesn't get a dummy variable.  
 
 
 
