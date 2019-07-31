@@ -1578,6 +1578,327 @@ from pyspark.ml.tuning import ParamGridBuilder
 params = ParamGridBuilder()
 You can systematically evaluate a model across a grid of parameter values using a technique known as grid search.  
 
+Optimizing flights linear regression
+Up until now you've been using the default parameters when building your models. In this exercise you'll use 
+cross validation to choose an optimal (or close to optimal) set of model parameters.
+
+The following have already been created:
+
+regression — a LinearRegression object
+pipeline — a pipeline with string indexer, one-hot encoder, vector assembler and linear regression and
+evaluator — a RegressionEvaluator object.
+
+
+Create a parameter grid builder.
+Add grids for with regression.regParam (values 0.01, 0.1, 1.0, and 10.0) and regression.elasticNetParam (values 0.0, 0.5, and 1.0).
+Build the grid.
+Create a cross validator, specifying five folds.
+
+
+# Create parameter grid
+params = ParamGridBuilder()
+
+# Add grids for two parameters
+params = params.addGrid(regression.regParam, [0.01, 0.1, 1.0, 10.0]) \
+               .addGrid(regression.elasticNetParam, [0.0, 0.5, 1.0])
+
+# Build the parameter grid
+params = params.build()
+print('Number of models to be tested: ', len(params))
+
+# Create cross-validator
+cv = CrossValidator(estimator=pipeline, estimatorParamMaps=params, evaluator=evaluator, numFolds=5)
+
+Nice! Multiple models are built effortlessly using grid search.
+
+
+Dissecting the best flight duration model
+You just set up a CrossValidator to find good parameters for the linear regression model predicting flight duration.
+
+Now you're going to take a closer look at the resulting model, split out the stages and use it to make predictions on the testing data.
+
+The following have already been created:
+
+cv — a trained CrossValidatorModel object and
+evaluator — a RegressionEvaluator object.
+The flights data have been randomly split into flights_train and flights_test.
+
+Retrieve the best model.
+Look at the stages in the best model.
+Isolate the linear regression stage and extract its parameters.
+Use the best model to generate predictions on the testing data and calculate the RMSE.
+
+
+
+# Get the best model from cross validation
+best_model = cv.bestModel
+
+# Look at the stages in the best model
+print(best_model.stages)
+
+# Get the parameters for the LinearRegression object in the best model
+best_model.stages[3].extractParamMap()
+
+# Generate predictions on testing data using the best model then calculate RMSE
+predictions = best_model.transform(flights_test)
+evaluator.evaluate(predictions)
+
+SMS spam optimised
+The pipeline you built earlier for the SMS spam model used the default parameters for all of the elements in the pipeline. It's very unlikely that these parameters will give a particularly good model though.
+
+In this exercise you'll set up a parameter grid which can be used with cross validation to choose a good set of parameters for the SMS spam classifier.
+
+The following are already defined:
+
+hasher — a HashingTF object and
+logistic — a LogisticRegression object.
+
+Create a parameter grid builder object.
+Add grid points for numFeatures and binary parameters to the HashingTF object, giving values 1024, 4096 and 16384, and 
+True and False, respectively.
+Add grid points for regParam and elasticNetParam parameters to the LogisticRegression object, giving values of 0.01, 0.1, 
+1.0 and 10.0, and 0.0, 0.5, and 1.0 respectively.
+Build the parameter grid.
+
+# Create parameter grid
+params = ParamGridBuilder()
+
+# Add grid for hashing trick parameters
+params = params.addGrid(hasher.numFeatures, [1024, 4096, 16384]) \
+               .addGrid(hasher.binary, [True, False])
+
+# Add grid for logistic regression parameters
+params = params.addGrid(logistic.regParam, [0.01, 0.1, 1.0, 10.0]) \
+               .addGrid(logistic.elasticNetParam, [0.0, 0.5, 1.0])
+
+# Build parameter grid
+params = params.build()
+
+Using cross-validation on a pipeline makes it possible to optimise each stage in the workflow.
+Correct! There are 72 points in the parameter grid and 5 folds in the cross-validator. The product is 360. 
+It takes time to build all of those models, which is why we're not doing it here!
+-----------------------------------------------------------------------------------------------------------------------
+Ensemble
+
+An ensemble model is a collection of models. An ensemble model combines the results from multiple models to 
+produce better predictions than any one of those models acting alone. The concept is based on the idea of the "Wisdom of the Crowd", 
+which implies that the aggregated opinion of a group is better than the opinions of the individuals in that group, even if the 
+individuals are experts.  
+
+
+Diversity and independence are important because the best collective decisions are the product of disagreement and contest,
+not consensus or compromise.  
+
+Random Forest -- an ensemble of Decision Trees 
+To ensure that each of those trees is different, the Decision Tree algorithm is modified slightly: 
+Creating model diversity - Each tree trained on random subset data. Random subset of features used for splitting at each node.
+No two trees in the forest should be the same.  All of the trees operate in parallel. 
+
+Create a forest of trees: 
+
+Returning to cars data: manufactured in USA (0.0) or not (0.1) 
+Create Random Forest classifier:
+
+from pyspark.ml.classification import RandomForestClassifier 
+forest = RandomForestClassifier(numTrees=5) 
+
+By default this is twenty, but we'll drop that to five so that the results are easier to interpret.  
+
+Fit to the training data. 
+forest = forest.fit(cares_train)
+
+Once the model is trained it's possible to access the individual trees in the forest using the trees attribute. 
+
+
+How to access trees within forest? 
+forest.trees 
+
+Thise can each be used to make individual predictions. There are precisely five trees in the forest, as specified. 
+
+The trees are all different, as can be seen from the varying number of nodes in each tree.  You can then make predictions using each 
+tree individually. 
+Perdictions from individual trees.  What preditions are generated by each tree? 
+Here are the predictions of individual trees on a subset of testing data.  Each row represent predictions from each of the five trees
+for a specific record. In some cases all of the trees agree, but there is oftern some dissent amongst the models. This is precisely 
+where the Random Forest works best: where the prediction is not clear cut. 
+
+The Random Forest model creates a consensus prediction by aggregating the predictions across all of the individual trees. 
+The transform method will automatically generate a consensus prediction column. It also creates a probability 
+column which assigns aggregate probabilities to each of the outcomes. 
+
+
+Feature importances 
+
+forest.featureImportances 
+
+It's possible to get an idea of the relative importance of the features in the model by looking at the featureImportances attribute. 
+An importance is assigned to each feature, where a larger importance indicates a feature which makes a larger contribution to the 
+model. 
+
+Example: 
+
+cyl: 0: 0.0205
+size: 1: 0.2701 
+mass: 2: 0.108 
+length: 3: 0.1895
+rpm: 4: 0.2939
+consumption: 5: 0.11810
+
+Looks like: 
+* rpm is most important 
+* cyl is least important 
+
+Grandient - Boosted Trees 
+Iterative boosting algorithm: 
+
+1. Build a Decision Tree and add to ensemble 
+2. Predict label for each training instance using ensemble 
+3. Compare predictions with known labels
+4. Emphasize training instances with incorrect predictions
+5. Return to 1
+
+Model improves on each iteration. 
+
+Boosting trees 
+Create a Gradient-Boosted Tree classifier 
+
+from pyspark.ml.classification import GBTClassifier 
+gbt = GBTClassifier(maxIter=10)
+
+Fit to the training data
+
+gbt = gbt.fit(cars_train) 
+
+
+Comparing trees 
+Let's compare the three types of three models on testing data.  
+AUC obtained by each of them on the testing data. The higher the AUC score is better.  
+
+
+Delayed flights with Gradient-Boosted Trees
+You've previously built a classifier for flights likely to be delayed using a Decision Tree. 
+In this exercise you'll compare a Decision Tree model to a Gradient-Boosted Trees model.
+Import the classes required to create Decision Tree and Gradient-Boosted Tree classifiers.
+Create Decision Tree and Gradient-Boosted Tree classifiers. Train on the training data.
+Create an evaluator and calculate AUC on testing data for both classifiers. Which model performs better?
+Find the number of trees and the relative importance of features in the Gradient-Boosted Tree classifier.
+
+from pyspark.ml.classification import DecisionTreeClassifier, GBTClassifier
+from pyspark.ml.evaluation import BinaryClassificationEvaluator
+
+# Create model objects and train on training data
+tree = DecisionTreeClassifier().fit(flights_train)
+gbt = GBTClassifier().fit(flights_train)
+
+# Compare AUC on testing data
+evaluator = BinaryClassificationEvaluator()
+evaluator.evaluate(tree.transform(flights_test))
+evaluator.evaluate(gbt.transform(flights_test))
+
+# Find the number of trees and the relative importance of features
+print(gbt.getNumTrees)
+print(gbt.featureImportances)
+
+
+
+
+Delayed flights with a Random Forest
+In this exercise you'll bring together cross validation and ensemble methods. You'll be training a Random 
+Forest classifier to predict delayed flights, using cross validation to choose the best values for model parameters.
+
+You'll find good values for the following parameters:
+
+featureSubsetStrategy — the number of features to consider for splitting at each node and
+maxDepth — the maximum number of splits along any branch.
+Unfortunately building this model takes too long, so we won't be running the .fit() method on the pipeline.
+
+Create a random forest classifier object.
+Create a parameter grid builder object. Add grid points for the featureSubsetStrategy and maxDepth parameters.
+Create binary classification evaluator.
+Create a cross-validator object, specifying the estimator, parameter grid and evaluator. Choose 5-fold cross validation.
+
+
+
+# Create a random forest classifier
+forest = RandomForestClassifier()
+
+# Create a parameter grid
+params = ParamGridBuilder() \
+            .addGrid(forest.featureSubsetStrategy, ['all', 'onethird', 'sqrt', 'log2']) \
+            .addGrid(forest.maxDepth, [2, 5, 10]) \
+            .build()
+
+# Create a binary classification evaluator
+evaluator = BinaryClassificationEvaluator()
+
+# Create a cross-validator
+cv = CrossValidator(estimator=forest, estimatorParamMaps=params, evaluator=evaluator, numFolds=5)
+
+
+
+Evaluating Random Forest
+In this final exercise you'll be evaluating the results of cross-validation on a Random Forest model.
+
+The following have already been created:
+
+cv - a cross-validator which has already been fit to the training data
+evaluator — a BinaryClassificationEvaluator object and
+flights_test — the testing data.
+
+
+Retrieve a list of average AUC metrics across all models in the parameter grid.
+What is the average AUC for the best model? This will be the largest AUC in the list.
+Find the value of the maxDepth and featureSubsetStrategy parameters for the best model.
+Calculate the AUC for the best model predictions on the testing data.
+
+
+# Average AUC for each parameter combination in grid
+avg_auc = cv.avgMetrics
+
+# Average AUC for the best model
+best_model_auc = max(cv.avgMetrics)
+
+# What's the optimal parameter value?
+opt_max_depth = cv.bestModel.explainParam('maxDepth')
+opt_feat_substrat = cv.bestModel.explainParam('featureSubsetStrategy')
+
+# AUC for best model on testing data
+best_auc = evaluator.evaluate(cv.transform(flights_test))
+Fantastic! Optimized Random Forest > Random Forest > Decision Tree
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
  
