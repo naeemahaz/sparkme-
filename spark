@@ -38,6 +38,7 @@ print(spark.version)
 # Terminate the cluster
 spark.stop()
 
+
 ----------------------------------------------------------------------------
 
 Loading flights data
