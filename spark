@@ -1336,7 +1336,13 @@ stage, you simply call the fit() method for the pipeline on the training data.  
 is then automatically applied to the training data in turn. This will systematically apply() and transform()
 methods for each stage in the pipeline.The trained pipeline can then be used to make predictions on the testing
 data by calling its transform() method. The pipeline transform() method will only call the transform()
-method for each of the stages in the pipeline.
+method for each of the stages in the pipeline. You can access the stages in the pipeline by using the stage attribute, 
+which is a list. 
+
+
+For example, to access the regression component of the pipeline you'd use an index of 3 
+Having access to that component makes it possible to get the intercept and coefficients for the trained 
+LinearRegression model. 
 
 
 
