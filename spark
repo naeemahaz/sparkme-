@@ -1345,6 +1345,257 @@ Having access to that component makes it possible to get the intercept and coeff
 LinearRegression model. 
 
 
+Flight duration model: Pipeline stages
+You're going to create the stages for the flights duration model pipeline. 
+You will use these in the next exercise to build a pipeline and to create a regression model.
+
+Create an indexer to convert the 'org' column into an indexed column called 'org_idx'.
+Create a one-hot encoder to convert the 'org_idx' and 'dow' columns into dummy variable columns called 'org_dummy' and 'dow_dummy'.
+Create an assembler which will combine the 'km' column with the two dummy variable columns. The output column should be 
+called 'features'.
+Create a linear regression object to predict flight duration.
+Note:: You might find it useful to revisit the slides from the lessons in the Slides panel next to the IPython Shell.
+
+# Convert categorical strings to index values
+indexer = StringIndexer(inputCol='org', outputCol='org_idx')
+
+# One-hot encode index values
+onehot = OneHotEncoderEstimator(
+    inputCols=['org_idx', 'dow'],
+    outputCols=['org_dummy', 'dow_dummy']
+)
+
+# Assemble predictors into a single column
+assembler = VectorAssembler(inputCols=['km', 'org_dummy', 'dow_dummy'], outputCol='features')
+
+# A linear regression object
+regression = LinearRegression(labelCol='duration')
+
+
+Flight duration model: Pipeline model
+You're now ready to put those stages together in a pipeline.
+
+You'll construct the pipeline and then train the pipeline on the training data. This will apply each of the 
+individual stages in the pipeline to the training data in turn. None of the stages will be exposed to the testing data at 
+all: there will be no leakage!
+
+Once the entire pipeline has been trained it will then be used to make predictions on the testing data.
+
+The data are available as flights, which has been randomly split into flights_train and flights_test.
+
+Import the class for creating a pipeline.
+Create a pipeline object and specify the indexer, onehot, assembler and regression stages, in this order.
+Train the pipeline on the training data.
+Make predictions on the testing data.
+
+# Import class for creating a pipeline
+from pyspark.ml import Pipeline
+
+# Construct a pipeline
+pipeline = Pipeline(stages=[indexer, onehot, assembler, regression])
+
+# Train the pipeline on the training data
+pipeline = pipeline.fit(flights_train)
+
+# Make predictions on the testing data
+predictions = pipeline.transform(flights_test)
+
+
+SMS spam pipeline
+You haven't looked at the SMS data for quite a while. Last time we did the following:
+
+split the text into tokens
+removed stop words
+applied the hashing trick
+converted the data from counts to IDF and
+trained a linear regression model.
+Each of these steps was done independently. This seems like a great application for a pipeline!
+
+
+Create an object for splitting text into tokens.
+Create an object to remove stop words. Rather than explicitly giving the input column name, use the getOutputCol() 
+method on the previous object.
+Create objects for applying the hashing trick and transforming the data into a TF-IDF. Use the getOutputCol() method again.
+Create a pipeline which wraps all of the above steps as well as an object to create a Logistic Regression model.
+
+
+from pyspark.ml.feature import Tokenizer, StopWordsRemover, HashingTF, IDF
+
+# Break text into tokens at non-word characters
+tokenizer = Tokenizer(inputCol='text', outputCol='words')
+
+# Remove stop words
+remover = StopWordsRemover(inputCol=tokenizer.getOutputCol(), outputCol='terms')
+
+# Apply the hashing trick and transform to TF-IDF
+hasher = HashingTF(inputCol=remover.getOutputCol(), outputCol="hash")
+idf = IDF(inputCol=hasher.getOutputCol(), outputCol="features")
+
+# Create a logistic regression object and add everything to a pipeline
+logistic = LogisticRegression()
+pipeline = Pipeline(stages=[tokenizer, remover, hasher, idf, logistic])
+
+
+------------------------------------------------------------------------------------------------------
+
+Cross-Validation
+
+Cross-Validation - How well a model works if you were able to test it multiiple times.  
+
+Remember that before splitting it's important to first randomize the data so that the distributions in the training and 
+testing data are similar. You then split the training data into a number of partitions or "folds". 
+The number of folds normally factors into the name of the technique.  For example, if you split into five folds then you'd  talk
+about 5-fold cross-validation.  Once the training data have been split into folds you can start cross-validating. 
+
+First keep aside the data in the first fold. Train a model on the remaining four folds. Then evaluate that model on the data 
+from the first fold. This will give the first value for the evaluation metric.  
+Next you move onto the second fold, where the same process is repeated: data in the second fold are set aside for testing while
+the remaining four folds are used to train a model.  That model is tested on the second fold data, yielding the second value
+for the evaluation metric. You repeat the process for the remaining folds. Each of the folds is used in turn as testing data and 
+you end up with as many values for the evaluation as there are folds. At this point you are in a position to calculate 
+the average of the evaluation metric over all folds, which is a much more robust measure of model performance than a single 
+value. 
+
+Build a cross-validated regression model to predict consumption. 
+
+Estimator and evaluator:  An object to build the model. This can be a pipeline.
+Here are the first two ingredients which you need to perform cross-validated. 
+
+regression = LinearRegression(labelCol='consumption') 
+
+An estimator, which builds the model and is often a pipeline. An object to evaluate model performance. How will a model works on
+testing data. 
+
+evaluator = RegressionEvaluator(labelCol='consumption') 
+
+Grid and cross-validator 
+from pyspark.ml.tuning import CrossValidator, ParamGridBuilder 
+
+The cross-validation object. 
+
+cv = CrossValidator(estimator=regression,
+                    estimatorParamMaps=params, 
+                    evaluator=evaluator,
+                    numFolds=10, seed=13) 
+                    
+You can optionally specify the number of folds (which defaults to three) and a random number seed for repeatability. 
+
+Cross-validators need training too 
+Apply cross-validation to the training data 
+The cross-validator has a fit() method which will apply the cross-validation procedure to the training data.
+
+cv = cv.fit(cars_train) 
+
+You can then look at the average RMSE calculated across all of the folds. 
+
+What the average RMSE across the folds? 
+cv.avgMetrics 
+
+You can then look at the average RMSE calculated across all of the folds. 
+This is a more robust measure of model performance because it is based on multiple train/test splits. Note that the average 
+metric is returned as a list.
+
+Cross-Validators act like models 
+Make predictions on the original testing data
+
+evaluator.evaluate(cv.transform(cars_test))
+
+----------------------------------------------------------------------------------------
+Cross validating simple flight duration model
+You've already built a few models for predicting flight duration and evaluated them with a simple train/test split. However, cross-validation provides a much better way to evaluate model performance.
+
+In this exercise you're going to train a simple model for flight duration using cross-validation. Travel time is usually strongly correlated with distance, so using the km column alone should give a decent model.
+
+The data have been randomly split into flights_train and flights_test.
+
+The following classes have already been imported: LinearRegression, RegressionEvaluator, ParamGridBuilder and CrossValidator.
+
+Create an empty parameter grid.
+Create objects for building and evaluating a linear regression model. The model should predict the "duration" field.
+Create a cross-validator object. Provide values for the estimator, estimatorParamMaps and evaluator arguments. Choose 5-fold cross validation.
+Train and test the model across multiple folds of the training data.
+
+# Create an empty parameter grid
+params = ParamGridBuilder().build()
+
+# Create objects for building and evaluating a regression model
+regression = LinearRegression(labelCol='duration')
+evaluator = RegressionEvaluator(labelCol='duration')
+
+# Create a cross validator
+cv = CrossValidator(estimator=regression, estimatorParamMaps=params, evaluator=evaluator, numFolds=5)
+
+# Train and test model on multiple folds of the training data
+cv = cv.fit(flights_train)
+
+# NOTE: Since cross-validation builds multiple models, the fit() method can take a little while to complete.
+
+
+Cross validating flight duration model pipeline
+The cross-validated model that you just built was simple, using km alone to predict duration.
+
+Another important predictor of flight duration is the origin airport. Flights generally take longer to get into the air 
+from busy airports. Let's see if adding this predictor improves the model!
+
+In this exercise you'll add the org field to the model. However, since org is categorical, there's more work to be done 
+before it can be included: it must first be transformed to an index and then one-hot encoded before being assembled with km and used to build the regression model. We'll wrap these operations up in a pipeline.
+
+The following objects have already been created:
+
+params — an empty parameter grid
+evaluator — a regression evaluator
+regression — a LinearRegression object with labelCol='duration'.
+All of the required classes have already been imported.
+
+
+Create a string indexer. Specify the input and output fields as org and org_idx.
+Create a one-hot encoder. Name the output field org_dummy.
+Assemble the km and org_dummy fields into a single field called features.
+Create a pipeline using the following operations: string indexer, one-hot encoder, assembler and linear regression. Use this to create a cross-validator.
+
+# Create an indexer for the org field
+indexer = StringIndexer(inputCol='org', outputCol='org_idx')
+
+# Create an one-hot encoder for the indexed org field
+onehot = OneHotEncoderEstimator(inputCols=['org_idx'], outputCols=['org_dummy'])
+
+# Assemble the km and one-hot encoded fields
+assembler = VectorAssembler(inputCols=['km', 'org_dummy'], outputCol='features')
+
+# Create a pipeline and cross-validator.
+pipeline = Pipeline(stages=[indexer, onehot, assembler, regression])
+cv = CrossValidator(estimator=pipeline,
+                    estimatorParamMaps=params,
+                    evaluator=evaluator)
+ ----------------------------------------------------------------------------------------------------------------
+ 
+ Grid Search 
+
+Parameter grid 
+
+from pyspark.ml.tuning import ParamGridBuilder 
+#Create a parameter frid builder 
+params = ParamGridBuilder()
+You can systematically evaluate a model across a grid of parameter values using a technique known as grid search.  
+
+
+
+ 
+                    
+
+
+
+
+
+
+
+
+
+                    
+
+
+
+
 
 
 
