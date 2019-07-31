@@ -1215,8 +1215,104 @@ ridge = LinearRegression(labelCol = 'consumption', elasticNetparam=0, regParam=0
 ridge.fit(car_train) 
 
 
+Flight duration model: More features!
+Let's add more features to our model. This will not necessarily result in a better model. Adding 
+some features might improve the model. Adding other features might make it worse.
+
+More features will always make the model more complicated and difficult to interpret.
+
+These are the features you'll include in the next model:
+
+km
+org (origin airport, one-hot encoded, 8 levels)
+depart (departure time, binned in 3 hour intervals, one-hot encoded, 8 levels)
+dow (departure day of week, one-hot encoded, 7 levels) and
+mon (departure month, one-hot encoded, 12 levels).
+These have been assembled into the features column, which is a sparse representation of 32 columns 
+(remember one-hot encoding produces a number of columns which is one fewer than the number of levels).
+
+The data are available as flights, randomly split into flights_train and flights_test. The object 
+predictions is also available.
+
+Fit a linear regression model to the training data.
+Generate predictions for the testing data.
+Calculate the RMSE on the testing data.
+Look at the model coefficients. Are any of them zero?
 
 
+from pyspark.ml.regression import LinearRegression
+from pyspark.ml.evaluation import RegressionEvaluator
+
+# Fit linear regression model to training data
+regression = LinearRegression(labelCol='duration').fit(flights_train)
+
+# Make predictions on testing data
+predictions = regression.transform(flights_test)
+
+# Calculate the RMSE on testing data
+rmse = RegressionEvaluator(labelCol='duration').evaluate(predictions)
+print("The test RMSE is", rmse)
+
+# Look at the model coefficients
+coeffs = regression.coefficients
+print(coeffs)
+
+Flight duration model: Regularisation!
+In the previous exercise you added more predictors to the flight duration model. 
+The model performed well on testing data, but with so many coefficients it was difficult to interpret.
+
+In this exercise you'll use Lasso regression (regularized with a L1 penalty) to create 
+a more parsimonious model. Many of the coefficients in the resulting model will be set 
+to zero. This means that only a subset of the predictors actually contribute to the model. 
+Despite the simpler model, it still produces a good RMSE on the testing data.
+
+You'll use a specific value for the regularization strength. Later you'll learn how to find 
+the best value using cross validation.
+
+The data (same as previous exercise) are available as flights, randomly split into flights_train 
+and flights_test.
+
+
+Fit a linear regression model to the training data.
+Calculate the RMSE on the testing data.
+Look at the model coefficients.
+Get the count of coefficients equal to 0.
+
+
+from pyspark.ml.regression import LinearRegression
+from pyspark.ml.evaluation import RegressionEvaluator
+
+# Fit Lasso model (α = 1) to training data
+regression = LinearRegression(labelCol='duration', regParam=1, elasticNetParam=1).fit(flights_train)
+
+# Calculate the RMSE on testing data
+rmse = RegressionEvaluator(labelCol='duration').evaluate(regression.transform(flights_test))
+print("The test RMSE is", rmse)
+
+# Look at the model coefficients
+coeffs = regression.coefficients
+print(coeffs)
+
+# Number of zero coefficients
+zero_coeff = sum([beta == 0 for beta in regression.coefficients])
+print("Number of ceofficients equal to 0:", zero_coeff)
+--------------------------------------------------------------------------------------------
+
+
+Pipeline
+
+Leakage 
+.fit()  Only for training data. Really robust results you need to be careful only to apply the 
+fit() method to training data.
+
+Because if a fit() method is applied to *any* of the testing data then the model will effectively.
+have seen those data during the training phase, so the results of testing will no longer be objective.  
+The transform() method, on the other hand, can be applied to both training and testing data since it does
+not result in any changes in the underlying model.  
+
+Leakage occurs whenever a fit() method is applied to testing data. Suppose that you fit a model 
+using both the training and testing data. The model would then already have *seen* the testing data,
+so using those data to test the model. 
 
 
 
