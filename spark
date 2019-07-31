@@ -1314,6 +1314,35 @@ Leakage occurs whenever a fit() method is applied to testing data. Suppose that 
 using both the training and testing data. The model would then already have *seen* the testing data,
 so using those data to test the model. 
 
+A pipeline will make it easier to avoid leakage because it simplifies the training and testing process.
+
+
+Pipeline -  A pipeline consists of a series of operations. You could apply each operation 
+individually or you could just apply the pipeline.
+
+First you fit the indexer to the training data. Then you can the transform() method on the training data to 
+add the indexed column. Then you call the transform() method on the testing data to add the indexed column 
+there too. Note that the testing data was not used to fit the indexer. Next you do the same 
+things for the one-hot encoder, fitting to the training data and then using the fitted encoder to update the 
+training and testing data sets. The assembler is next. In this case there is no fit( method, so you simply
+apply the transform() method to the training and testing data. Finally the data are ready. You fit 
+the regression model to the training data and then use the model to make predictions on the testing data.
+Throughout the process you've been careful to keep the testing data out of the training process. 
+But this is hard work and it's easy enough to slip up. A pipleine makes training and testing a 
+complicated mode a lot eassier. The pipeline class lives in the ml sub-module. You create a pipline by
+specifying a sequence of stages. Where each stage corresponds to a step in the model building process.  The 
+stages are excuted in order. Now, rather than calling the fit( and transform() methods for each 
+stage, you simply call the fit() method for the pipeline on the training data.  Each of the stages in the pipeline
+is then automatically applied to the training data in turn. This will systematically apply() and transform()
+methods for each stage in the pipeline.The trained pipeline can then be used to make predictions on the testing
+data by calling its transform() method. The pipeline transform() method will only call the transform()
+method for each of the stages in the pipeline.
+
+
+
+
+
+
 
 
 
